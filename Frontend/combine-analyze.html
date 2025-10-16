@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Combine & Analyze Excel — ILoveExcel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+      /* Fade-in animation */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      body {
+        animation: fadeIn 0.6s ease-in-out;
+        background: linear-gradient(to bottom right, #e8f5e9, #f1f8f6);
+      }
+
+      /* Floating icon animation */
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-6px);
+        }
+      }
+
+      /* Glow hover */
+      .glow-hover:hover {
+        box-shadow: 0 4px 20px rgba(0, 128, 64, 0.25);
+        transform: scale(1.02);
+      }
+    </style>
+  </head>
+
+  <body
+    class="bg-gradient-to-b from-green-50 to-green-100 text-gray-800 font-[Inter] min-h-screen flex flex-col"
+  >
+    <!-- Header -->
+    <header class="glassy shadow-sm sticky top-0 z-10 fade-in">
+      <div
+        class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center"
+      >
+        <h1
+          class="text-2xl font-bold text-green-700 flex items-center gap-2 select-none"
+        >
+          💚
+          <span
+            class="bg-gradient-to-r from-green-700 to-green-500 bg-clip-text text-transparent"
+            >ILoveExcel</span
+          >
+        </h1>
+        <nav
+          class="space-x-5 text-sm font-semibold flex flex-wrap justify-center"
+        >
+          <a href="index.html" class="hover:text-green-700 transition">Home</a>
+          <a href="merge.html" class="hover:text-green-700 transition">Merge</a>
+          <a href="split.html" class="hover:text-green-700 transition">Split</a>
+          <a href="convert.html" class="hover:text-green-700 transition"
+            >Convert</a
+          >
+          <a href="clean.html" class="hover:text-green-700 transition">Clean</a>
+          <a
+            href="combine-analyze.html"
+            class="text-green-700 underline underline-offset-4"
+            >Combine + Analyze</a
+          >
+          <a href="EditExcel.html" class="hover:text-green-700 transition"
+            >Edit Excel</a
+          >
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main
+      class="max-w-4xl mx-auto mt-10 bg-white/80 backdrop-blur-lg shadow-xl rounded-2xl p-8 fade-in mb-12 glow"
+    >
+      <div class="flex items-center gap-3 mb-4">
+        <i
+          data-lucide="merge"
+          class="w-8 h-8 text-green-600 animate-[float_3s_ease-in-out_infinite]"
+        ></i>
+        <h2
+          class="text-3xl font-bold bg-gradient-to-r from-green-700 to-green-500 bg-clip-text text-transparent"
+        >
+          Combine & Analyze Excel Files
+        </h2>
+      </div>
+
+      <p class="text-gray-600 mb-6 leading-relaxed">
+        Upload multiple Excel or CSV files that share the same headers. This
+        tool will merge them into one and generate automatic data analysis —
+        including summaries and unique value insights.
+      </p>
+
+      <input
+        id="files"
+        type="file"
+        accept=".xlsx,.xls,.csv"
+        multiple
+        class="block w-full text-sm border rounded-lg p-3 border-gray-300 mb-5 focus:ring-2 focus:ring-green-400"
+      />
+
+      <button
+        id="combineBtn"
+        class="px-6 py-3 bg-gradient-to-r from-green-700 to-green-500 text-white font-semibold rounded-lg hover:from-green-600 hover:to-green-400 transition-all glow"
+      >
+        🚀 Combine & Analyze
+      </button>
+
+      <p id="status" class="text-sm text-gray-600 mt-3"></p>
+
+      <!-- Results Section -->
+      <div id="results" class="hidden mt-10">
+        <h3
+          class="text-xl font-semibold mb-4 bg-gradient-to-r from-green-700 to-green-500 bg-clip-text text-transparent"
+        >
+          📊 Combined Analysis Results
+        </h3>
+
+        <div
+          id="summary"
+          class="space-y-2 mb-6 bg-green-50 border border-green-100 p-4 rounded-lg"
+        ></div>
+
+        <h4 class="font-semibold mb-2 text-green-700">
+          🧩 Unique Values per Column:
+        </h4>
+        <div
+          id="uniqueValues"
+          class="text-sm bg-gray-50 p-4 rounded-lg border mb-6"
+        ></div>
+
+        <h4 class="font-semibold mb-2 text-green-700">🔍 Data Preview:</h4>
+        <div
+          class="overflow-x-auto border rounded-lg max-h-[500px] overflow-y-scroll shadow-inner"
+        >
+          <table id="preview" class="min-w-full text-sm border-collapse">
+            <thead class="bg-green-100 sticky top-0 z-10"></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- Popup Modal -->
+    <div
+      id="popupOverlay"
+      class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
+    >
+      <div
+        id="popupBox"
+        class="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-6 max-w-sm text-center fade-in border border-green-100"
+      >
+        <h3 id="popupTitle" class="text-lg font-semibold mb-2 text-green-700">
+          Processing...
+        </h3>
+        <p id="popupMsg" class="text-sm text-gray-600 mb-4">
+          Please wait while files are analyzed.
+        </p>
+        <button
+          id="closePopup"
+          class="mt-2 px-4 py-2 bg-gradient-to-r from-green-700 to-green-500 text-white rounded-lg hover:from-green-600 hover:to-green-400 glow"
+        >
+          OK
+        </button>
+      </div>
+    </div>
+
+    <footer class="text-center text-sm text-gray-500 py-8 mt-auto">
+      © 2025 <span class="text-green-600 font-semibold">ILoveExcel</span> — Made
+      with 💚 for Excel lovers.
+    </footer>
+
+    <script>
+      lucide.createIcons();
+
+      const filesEl = document.getElementById("files");
+      const combineBtn = document.getElementById("combineBtn");
+      const resultsEl = document.getElementById("results");
+      const summaryEl = document.getElementById("summary");
+      const uniqueEl = document.getElementById("uniqueValues");
+      const previewEl = document.getElementById("preview");
+      const popup = document.getElementById("popupOverlay");
+      const popupTitle = document.getElementById("popupTitle");
+      const popupMsg = document.getElementById("popupMsg");
+      const closePopup = document.getElementById("closePopup");
+
+      function showPopup(title, msg) {
+        popupTitle.textContent = title;
+        popupMsg.textContent = msg;
+        popup.classList.remove("hidden");
+      }
+
+      closePopup.addEventListener("click", () => {
+        popup.classList.add("hidden");
+      });
+
+      function readFileAsArrayBuffer(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.onerror = reject;
+          reader.readAsArrayBuffer(file);
+        });
+      }
+
+      async function parseFile(file) {
+        const data = await readFileAsArrayBuffer(file);
+        const wb = XLSX.read(data, { type: "array" });
+        const first = wb.SheetNames[0];
+        const sheet = wb.Sheets[first];
+        return XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+      }
+
+      combineBtn.addEventListener("click", async () => {
+        const files = Array.from(filesEl.files);
+        if (files.length < 1)
+          return showPopup(
+            "⚠️ No Files",
+            "Please select at least one Excel or CSV file."
+          );
+
+        showPopup(
+          "Processing...",
+          "Reading and analyzing files, please wait..."
+        );
+        resultsEl.classList.add("hidden");
+
+        try {
+          const allData = [];
+          for (const f of files) {
+            const rows = await parseFile(f);
+            if (rows.length < 2) throw new Error(f.name + " has no data.");
+            allData.push(rows);
+          }
+
+          // Header validation
+          const firstHeaders = allData[0][0].map((h) =>
+            String(h).trim().toLowerCase()
+          );
+          for (let i = 1; i < allData.length; i++) {
+            const headers = allData[i][0].map((h) =>
+              String(h).trim().toLowerCase()
+            );
+            if (headers.join(",") !== firstHeaders.join(","))
+              throw new Error(`Header mismatch in ${files[i].name}`);
+          }
+
+          // Combine data
+          const combined = [allData[0][0]];
+          allData.forEach((file) => combined.push(...file.slice(1)));
+
+          const headers = combined[0];
+          const dataRows = combined.slice(1);
+
+          // Summary
+          const totalRows = dataRows.length;
+          const totalCols = headers.length;
+          let emptyCells = 0;
+          for (const row of dataRows) {
+            for (const cell of row) {
+              if (cell === "" || cell == null || String(cell).trim() === "")
+                emptyCells++;
+            }
+          }
+
+          summaryEl.innerHTML = `
+            <p>📁 <b>Total Files:</b> ${files.length}</p>
+            <p>🧾 <b>Total Combined Rows:</b> ${totalRows.toLocaleString()}</p>
+            <p>🧱 <b>Total Columns:</b> ${totalCols}</p>
+            <p>⚪ <b>Empty Cells:</b> ${emptyCells.toLocaleString()}</p>
+          `;
+
+          // Unique values
+          const uniqueData = {};
+          headers.forEach((col, i) => {
+            const colValues = dataRows.map((r) => r[i]).filter((v) => v !== "");
+            uniqueData[col] = new Set(colValues).size;
+          });
+
+          uniqueEl.innerHTML = Object.entries(uniqueData)
+            .map(
+              ([col, count]) =>
+                `<p><b>${col}</b>: ${count.toLocaleString()} unique values</p>`
+            )
+            .join("");
+
+          // Preview
+          const previewLimit = 500;
+          const previewRows = dataRows.slice(0, previewLimit);
+          const previewHead = previewEl.querySelector("thead");
+          const previewBody = previewEl.querySelector("tbody");
+
+          previewHead.innerHTML = `<tr>${headers
+            .map(
+              (h) =>
+                `<th class="border px-3 py-2 text-left sticky top-0 bg-green-100">${h}</th>`
+            )
+            .join("")}</tr>`;
+
+          previewBody.innerHTML = previewRows
+            .map(
+              (r, idx) =>
+                `<tr class="${idx % 2 === 0 ? "bg-white" : "bg-gray-50"}">${r
+                  .map(
+                    (c) =>
+                      `<td class="border px-3 py-1 text-gray-700">${
+                        c ?? ""
+                      }</td>`
+                  )
+                  .join("")}</tr>`
+            )
+            .join("");
+
+          resultsEl.classList.remove("hidden");
+          showPopup(
+            "✅ Success!",
+            `Files combined successfully with ${totalRows.toLocaleString()} total rows.`
+          );
+        } catch (err) {
+          console.error(err);
+          showPopup("❌ Error", err.message);
+        }
+      });
+    </script>
+  </body>
+</html>

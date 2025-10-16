@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Clean Excel — ILoveExcel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+      /* Fade-in animation */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      body {
+        animation: fadeIn 0.6s ease-in-out;
+        background: linear-gradient(to bottom right, #e8f5e9, #f1f8f6);
+      }
+
+      /* Floating glow animation for icons */
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-6px);
+        }
+      }
+
+      /* Glow hover */
+      .glow-hover:hover {
+        box-shadow: 0 4px 20px rgba(0, 128, 64, 0.25);
+        transform: scale(1.02);
+      }
+    </style>
+  </head>
+
+  <body class="text-gray-800 font-[Inter]">
+    <!-- Header -->
+    <header class="backdrop-blur-md bg-white/80 shadow-sm sticky top-0 z-10">
+      <div
+        class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center"
+      >
+        <h1 class="text-2xl font-bold gradient-text flex items-center gap-2">
+          💚 ILoveExcel
+        </h1>
+        <nav
+          class="space-x-5 text-sm font-semibold flex flex-wrap justify-center"
+        >
+          <a href="index.html" class="hover:text-green-700 transition">Home</a>
+          <a href="merge.html" class="hover:text-green-700 transition">Merge</a>
+          <a href="split.html" class="hover:text-green-700 transition">Split</a>
+          <a href="convert.html" class="hover:text-green-700 transition"
+            >Convert</a
+          >
+          <a
+            href="clean.html"
+            class="text-green-700 underline underline-offset-4"
+            >Clean</a
+          >
+          <a href="combine-analyze.html" class="hover:text-green-700 transition"
+            >Combine + Analyze</a
+          >
+          <a href="EditExcel.html" class="hover:text-green-700 transition"
+            >Edit Excel</a
+          >
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main
+      class="max-w-4xl mx-auto mt-10 bg-white/80 backdrop-blur-xl shadow-lg rounded-2xl p-8 border border-green-100 glow-hover transition-all duration-300"
+    >
+      <div class="flex items-center gap-3 mb-6">
+        <i
+          data-lucide="brush"
+          class="w-8 h-8 text-green-600 animate-[float_3s_ease-in-out_infinite]"
+        ></i>
+        <h2 class="text-3xl font-extrabold gradient-text">Clean Excel Data</h2>
+      </div>
+      <p class="text-gray-600 mb-6">
+        Upload your Excel or CSV file to automatically clean your data by
+        <span class="font-semibold text-green-700">
+          removing duplicates, incomplete rows, or replacing blanks with 0.
+        </span>
+      </p>
+
+      <div class="space-y-5">
+        <!-- File Upload -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1"
+            >Select Excel/CSV File</label
+          >
+          <input
+            id="file"
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            class="block w-full text-sm border rounded-lg p-2 border-gray-300 focus:ring-2 focus:ring-green-500 outline-none"
+          />
+        </div>
+
+        <!-- Cleaning Options -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2"
+            >Choose Cleaning Options</label
+          >
+          <div class="space-y-2 text-sm text-gray-700">
+            <label class="flex items-center gap-2">
+              <input
+                id="removeDuplicates"
+                type="checkbox"
+                class="text-green-600"
+              />
+              Remove duplicate rows
+            </label>
+            <label class="flex items-center gap-2">
+              <input
+                id="removeIncompleteRows"
+                type="checkbox"
+                class="text-green-600"
+              />
+              Remove incomplete or empty rows
+            </label>
+            <label class="flex items-center gap-2">
+              <input
+                id="replaceEmptyWithZero"
+                type="checkbox"
+                class="text-green-600"
+              />
+              Replace empty cells with "0"
+            </label>
+          </div>
+        </div>
+
+        <!-- Custom name -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1"
+            >Custom File Name</label
+          >
+          <input
+            id="customName"
+            type="text"
+            placeholder="Example: Cleaned_Data"
+            class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-green-500 outline-none"
+          />
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-3 mt-4">
+          <button
+            id="previewBtn"
+            class="flex-1 px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition shadow-sm"
+          >
+            👁️ Preview Data
+          </button>
+
+          <button
+            id="cleanBtn"
+            class="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-500 text-white font-semibold rounded-xl hover:from-green-700 hover:to-emerald-600 transition-all shadow-md hover:shadow-lg glow-hover"
+          >
+            🧹 Clean & Download
+          </button>
+        </div>
+
+        <p id="status" class="text-sm text-gray-600 mt-3 text-center"></p>
+
+        <!-- Preview Section -->
+        <div id="previewSection" class="hidden mt-8 border-t pt-6">
+          <h3
+            class="text-lg font-semibold mb-3 flex items-center gap-2 gradient-text"
+          >
+            <i data-lucide="eye" class="w-5 h-5 text-green-600"></i>
+            Preview of Cleaned Data
+          </h3>
+          <div
+            class="overflow-x-auto border rounded-lg max-h-96 overflow-y-auto"
+          >
+            <table
+              id="previewTable"
+              class="min-w-full text-sm border-collapse"
+            ></table>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="text-center text-sm text-gray-500 py-8 mt-12">
+      © 2025 <span class="gradient-text font-semibold">ILoveExcel</span> — Made
+      with 💚 for Excel lovers.
+    </footer>
+
+    <script>
+      lucide.createIcons();
+
+      const fileEl = document.getElementById("file");
+      const cleanBtn = document.getElementById("cleanBtn");
+      const previewBtn = document.getElementById("previewBtn");
+      const statusEl = document.getElementById("status");
+      const previewSection = document.getElementById("previewSection");
+      const previewTable = document.getElementById("previewTable");
+
+      let cleanedData = [];
+      let removedRowsCount = 0;
+      let replacedCellsCount = 0;
+      let removedDuplicatesCount = 0;
+
+      function cellIsEmpty(cell) {
+        return (
+          cell === null ||
+          cell === undefined ||
+          (typeof cell === "string" && cell.trim() === "") ||
+          cell === ""
+        );
+      }
+
+      function readFileAsArrayBuffer(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.onerror = reject;
+          reader.readAsArrayBuffer(file);
+        });
+      }
+
+      function workbookToBlob(wb) {
+        const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+        return new Blob([wbout], { type: "application/octet-stream" });
+      }
+
+      function triggerDownload(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+      }
+
+      async function processFile(previewOnly = false) {
+        const file = fileEl.files[0];
+        if (!file) {
+          statusEl.textContent = "⚠️ Please select a file first.";
+          return;
+        }
+
+        removedRowsCount = 0;
+        replacedCellsCount = 0;
+        removedDuplicatesCount = 0;
+
+        const removeDuplicates =
+          document.getElementById("removeDuplicates").checked;
+        const removeIncompleteRows = document.getElementById(
+          "removeIncompleteRows"
+        ).checked;
+        const replaceEmptyWithZero = document.getElementById(
+          "replaceEmptyWithZero"
+        ).checked;
+        const customName =
+          document.getElementById("customName").value.trim() || "Cleaned_Data";
+
+        statusEl.textContent = "⏳ Processing file...";
+        previewSection.classList.add("hidden");
+
+        try {
+          const data = await readFileAsArrayBuffer(file);
+          const wb = XLSX.read(data, { type: "array" });
+          const first = wb.SheetNames[0];
+          const sheet = wb.Sheets[first];
+          const rows = XLSX.utils.sheet_to_json(sheet, {
+            header: 1,
+            defval: "",
+          });
+
+          if (!rows || rows.length <= 1)
+            throw new Error("File is empty or invalid.");
+
+          const headers = rows[0].map((h) => (h == null ? "" : String(h)));
+          let dataRows = rows.slice(1).map((r) => {
+            const copy = Array.from(r);
+            while (copy.length < headers.length) copy.push("");
+            if (copy.length > headers.length) copy.length = headers.length;
+            return copy;
+          });
+
+          if (removeIncompleteRows) {
+            dataRows = dataRows.filter((row) => {
+              const allEmpty = row.every(cellIsEmpty);
+              const hasMissing = row.some(cellIsEmpty);
+              const keep = !allEmpty && !hasMissing;
+              if (!keep) removedRowsCount++;
+              return keep;
+            });
+          }
+
+          if (replaceEmptyWithZero) {
+            let replaced = 0;
+            dataRows = dataRows.map((row) =>
+              row.map((cell) => {
+                if (cellIsEmpty(cell)) {
+                  replaced++;
+                  return "0";
+                }
+                return cell;
+              })
+            );
+            replacedCellsCount = replaced;
+          }
+
+          if (removeDuplicates) {
+            const seen = new Set();
+            const filtered = [];
+            for (const row of dataRows) {
+              const key = JSON.stringify(row);
+              if (seen.has(key)) {
+                removedDuplicatesCount++;
+                continue;
+              }
+              seen.add(key);
+              filtered.push(row);
+            }
+            dataRows = filtered;
+          }
+
+          cleanedData = [headers, ...dataRows];
+
+          if (previewOnly) {
+            showPreview(cleanedData);
+            statusEl.textContent = `✅ Preview ready. Rows removed: ${removedRowsCount}, Cells replaced: ${replacedCellsCount}, Duplicates removed: ${removedDuplicatesCount}.`;
+          } else {
+            const ws = XLSX.utils.aoa_to_sheet(cleanedData);
+            const newWb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(newWb, ws, "Cleaned");
+            const blob = workbookToBlob(newWb);
+            triggerDownload(blob, `${customName}.xlsx`);
+            statusEl.textContent = `✅ File cleaned & downloaded. Rows removed: ${removedRowsCount}, Cells replaced: ${replacedCellsCount}, Duplicates removed: ${removedDuplicatesCount}.`;
+          }
+        } catch (err) {
+          console.error(err);
+          statusEl.textContent = "❌ Error: " + (err.message || err);
+        }
+      }
+
+      function showPreview(data) {
+        if (!data || data.length === 0) return;
+        previewSection.classList.remove("hidden");
+
+        const limited = data.slice(0, 21);
+        const headers = limited[0];
+        const rows = limited.slice(1);
+
+        let html = `<thead class="bg-green-50 text-gray-700 font-semibold border-b"><tr>`;
+        html += headers
+          .map((h) => `<th class="border px-3 py-2">${h}</th>`)
+          .join("");
+        html += `</tr></thead><tbody>`;
+        rows.forEach((r) => {
+          html += `<tr>${r
+            .map((c) => `<td class="border px-3 py-2">${c ?? ""}</td>`)
+            .join("")}</tr>`;
+        });
+        html += "</tbody>";
+        previewTable.innerHTML = html;
+      }
+
+      previewBtn.addEventListener("click", () => processFile(true));
+      cleanBtn.addEventListener("click", () => processFile(false));
+    </script>
+  </body>
+</html>

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Online Excel Editor — ILoveExcel</title>
+
+    <!-- Tailwind & Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+
+    <style>
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      .fade-in {
+        animation: fadeIn 0.4s ease-out;
+      }
+      .glassy {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(12px);
+      }
+      .glow:hover {
+        box-shadow: 0 0 15px rgba(0, 123, 62, 0.35);
+        transform: scale(1.02);
+      }
+      td[contenteditable="true"]:focus {
+        outline: none;
+        background-color: #e8f5e9;
+      }
+    </style>
+  </head>
+
+  <body
+    class="bg-gradient-to-b from-green-50 to-green-100 text-gray-800 font-[Inter] min-h-screen flex flex-col"
+  >
+    <!-- Header -->
+    <header class="glassy shadow-sm sticky top-0 z-10 fade-in">
+      <div
+        class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center"
+      >
+        <h1
+          class="text-2xl font-bold text-green-700 flex items-center gap-2 select-none"
+        >
+          💚
+          <span
+            class="bg-gradient-to-r from-green-700 to-green-500 bg-clip-text text-transparent"
+            >ILoveExcel</span
+          >
+        </h1>
+
+        <nav
+          class="space-x-5 text-sm font-semibold flex flex-wrap justify-center"
+        >
+          <a href="index.html" class="hover:text-green-700 transition">Home</a>
+          <a href="merge.html" class="hover:text-green-700 transition">Merge</a>
+          <a href="split.html" class="hover:text-green-700 transition">Split</a>
+          <a href="convert.html" class="hover:text-green-700 transition"
+            >Convert</a
+          >
+          <a href="clean.html" class="hover:text-green-700 transition">Clean</a>
+          <a href="combine-analyze.html" class="hover:text-green-700 transition"
+            >Combine + Analyze</a
+          >
+          <a
+            href="EditExcel.html"
+            class="text-green-700 underline underline-offset-4"
+            >Edit Excel</a
+          >
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main
+      class="max-w-5xl mx-auto mt-10 bg-white/80 backdrop-blur-lg shadow-xl rounded-2xl p-8 fade-in mb-12 glow"
+    >
+      <!-- Title -->
+      <div class="flex items-center gap-3 mb-4">
+        <i data-lucide="edit-3" class="w-8 h-8 text-green-600"></i>
+        <h2
+          class="text-3xl font-bold bg-gradient-to-r from-green-700 to-green-500 bg-clip-text text-transparent"
+        >
+          Online Excel Editor
+        </h2>
+      </div>
+
+      <p class="text-gray-600 mb-6">
+        Upload an Excel or CSV file to view and edit its contents directly in
+        your browser. You can modify cells manually and download your edited
+        version anytime.
+      </p>
+
+      <!-- File Upload & Buttons -->
+      <div class="flex flex-wrap items-center gap-4 mb-5">
+        <input
+          id="fileInput"
+          type="file"
+          accept=".xlsx,.xls,.csv"
+          class="border p-2 rounded-lg border-gray-300 text-sm focus:ring-2 focus:ring-green-400"
+        />
+        <button
+          id="downloadBtn"
+          class="px-5 py-2 bg-gradient-to-r from-green-700 to-green-500 text-white rounded-lg hover:from-green-600 hover:to-green-400 transition glow disabled:opacity-40 disabled:cursor-not-allowed"
+          disabled
+        >
+          💾 Download Edited File
+        </button>
+        <button
+          id="clearBtn"
+          class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+          disabled
+        >
+          🧹 Clear Table
+        </button>
+      </div>
+
+      <!-- Table -->
+      <div
+        id="tableContainer"
+        class="hidden overflow-auto border rounded-lg max-h-[600px] shadow-inner"
+      >
+        <table id="editorTable" class="min-w-full text-sm border-collapse">
+          <thead class="bg-green-100 sticky top-0 z-10"></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <p id="status" class="text-sm text-gray-500 mt-3"></p>
+    </main>
+
+    <footer class="text-center text-sm text-gray-500 py-8 mt-auto">
+      © 2025 <span class="text-green-600 font-semibold">ILoveExcel</span> — Made
+      with 💚 for Excel lovers.
+    </footer>
+
+    <script>
+      lucide.createIcons();
+
+      const fileInput = document.getElementById("fileInput");
+      const tableContainer = document.getElementById("tableContainer");
+      const editorTable = document.getElementById("editorTable");
+      const downloadBtn = document.getElementById("downloadBtn");
+      const clearBtn = document.getElementById("clearBtn");
+      const statusEl = document.getElementById("status");
+
+      let currentData = [];
+
+      function readFile(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.onerror = reject;
+          reader.readAsArrayBuffer(file);
+        });
+      }
+
+      async function loadFile(file) {
+        const data = await readFile(file);
+        const wb = XLSX.read(data, { type: "array" });
+        const firstSheet = wb.SheetNames[0];
+        const sheet = wb.Sheets[firstSheet];
+        const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+        return json;
+      }
+
+      fileInput.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        statusEl.textContent = "📂 Loading file...";
+        try {
+          const rows = await loadFile(file);
+          currentData = rows;
+          renderTable(rows);
+          tableContainer.classList.remove("hidden");
+          downloadBtn.disabled = false;
+          clearBtn.disabled = false;
+          statusEl.textContent = `✅ Loaded ${
+            rows.length - 1
+          } rows successfully.`;
+        } catch (err) {
+          console.error(err);
+          statusEl.textContent = "❌ Error reading file.";
+        }
+      });
+
+      function renderTable(rows) {
+        const thead = editorTable.querySelector("thead");
+        const tbody = editorTable.querySelector("tbody");
+
+        if (!rows.length) return;
+
+        const headers = rows[0];
+        const bodyRows = rows.slice(1);
+
+        thead.innerHTML = `<tr>${headers
+          .map(
+            (h) =>
+              `<th class="border px-3 py-2 text-left bg-green-100 font-semibold sticky top-0">${h}</th>`
+          )
+          .join("")}</tr>`;
+
+        tbody.innerHTML = bodyRows
+          .map(
+            (row, rowIndex) =>
+              `<tr class="hover:bg-green-50">${row
+                .map(
+                  (cell, colIndex) =>
+                    `<td contenteditable="true" data-row="${
+                      rowIndex + 1
+                    }" data-col="${colIndex}" class="border px-3 py-1 min-w-[100px]">${cell}</td>`
+                )
+                .join("")}</tr>`
+          )
+          .join("");
+      }
+
+      // Handle edits
+      editorTable.addEventListener("input", (e) => {
+        const td = e.target.closest("td");
+        if (!td) return;
+        const row = parseInt(td.dataset.row);
+        const col = parseInt(td.dataset.col);
+        currentData[row][col] = td.textContent.trim();
+        statusEl.textContent = "✏️ Editing...";
+      });
+
+      // Download edited file
+      downloadBtn.addEventListener("click", () => {
+        const ws = XLSX.utils.aoa_to_sheet(currentData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "EditedSheet");
+        XLSX.writeFile(wb, "EditedFile.xlsx");
+        statusEl.textContent = "💾 File downloaded successfully.";
+      });
+
+      // Clear table
+      clearBtn.addEventListener("click", () => {
+        editorTable.querySelector("thead").innerHTML = "";
+        editorTable.querySelector("tbody").innerHTML = "";
+        tableContainer.classList.add("hidden");
+        fileInput.value = "";
+        downloadBtn.disabled = true;
+        clearBtn.disabled = true;
+        currentData = [];
+        statusEl.textContent = "🧹 Table cleared.";
+      });
+    </script>
+  </body>
+</html>

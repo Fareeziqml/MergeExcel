@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Convert Excel — ILoveExcel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+      /* Fade-in animation */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      body {
+        animation: fadeIn 0.6s ease-in-out;
+        background: linear-gradient(to bottom right, #e8f5e9, #f1f8f6);
+      }
+
+      /* Floating glow animation for icons */
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-6px);
+        }
+      }
+
+      /* Custom glowing hover */
+      .glow-hover:hover {
+        box-shadow: 0 4px 20px rgba(0, 128, 64, 0.3);
+        transform: scale(1.02);
+      }
+    </style>
+  </head>
+
+  <body class="text-gray-800 font-[Inter]">
+    <!-- Header -->
+    <header class="backdrop-blur-md bg-white/80 shadow-sm sticky top-0 z-10">
+      <div
+        class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center"
+      >
+        <h1 class="text-2xl font-bold gradient-text flex items-center gap-2">
+          💚 ILoveExcel
+        </h1>
+        <nav
+          class="space-x-5 text-sm font-semibold flex flex-wrap justify-center"
+        >
+          <a href="index.html" class="hover:text-green-700 transition">Home</a>
+          <a href="merge.html" class="hover:text-green-700 transition">Merge</a>
+          <a href="split.html" class="hover:text-green-700 transition">Split</a>
+          <a
+            href="convert.html"
+            class="text-green-700 underline underline-offset-4"
+            >Convert</a
+          >
+          <a href="clean.html" class="hover:text-green-700 transition">Clean</a>
+          <a href="combine-analyze.html" class="hover:text-green-700 transition"
+            >Combine + Analyze</a
+          >
+          <a href="EditExcel.html" class="hover:text-green-700 transition"
+            >Edit Excel</a
+          >
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main
+      class="max-w-3xl mx-auto mt-10 bg-white/80 backdrop-blur-xl shadow-lg rounded-2xl p-8 border border-green-100 glow-hover transition-all duration-300"
+    >
+      <div class="flex items-center gap-3 mb-6">
+        <i
+          data-lucide="repeat"
+          class="w-8 h-8 text-green-600 animate-[float_3s_ease-in-out_infinite]"
+        ></i>
+        <h2 class="text-3xl font-extrabold gradient-text">
+          Convert Excel Files
+        </h2>
+      </div>
+      <p class="text-gray-600 mb-6">
+        Convert Excel or CSV files into different formats (CSV, JSON, or Excel).
+        <span class="text-green-700 font-semibold"
+          >Fast, private, and runs directly in your browser.</span
+        >
+      </p>
+
+      <div class="space-y-5">
+        <!-- File Upload -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1"
+            >Select File</label
+          >
+          <input
+            id="file"
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            class="block w-full text-sm border rounded-lg p-2 border-gray-300 focus:ring-2 focus:ring-green-500 outline-none"
+          />
+        </div>
+
+        <!-- Conversion Type -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1"
+            >Convert To</label
+          >
+          <select
+            id="convertType"
+            class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-green-500 outline-none"
+          >
+            <option value="csv">CSV (.csv)</option>
+            <option value="json">JSON (.json)</option>
+            <option value="xlsx">Excel (.xlsx)</option>
+          </select>
+        </div>
+
+        <!-- Custom name -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1"
+            >Custom File Name</label
+          >
+          <input
+            id="customName"
+            type="text"
+            placeholder="Example: Converted_File"
+            class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-green-500 outline-none"
+          />
+        </div>
+
+        <!-- Action -->
+        <button
+          id="convertBtn"
+          class="mt-5 w-full px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-500 text-white font-semibold rounded-xl hover:from-green-700 hover:to-emerald-600 transition-all shadow-md hover:shadow-lg glow-hover"
+        >
+          🔄 Convert & Download
+        </button>
+
+        <p id="status" class="text-sm text-gray-600 mt-3 text-center"></p>
+      </div>
+    </main>
+
+    <footer class="text-center text-sm text-gray-500 py-8 mt-12">
+      © 2025 <span class="gradient-text font-semibold">ILoveExcel</span> — Made
+      with 💚 for Excel lovers.
+    </footer>
+
+    <script>
+      lucide.createIcons();
+
+      const fileEl = document.getElementById("file");
+      const convertBtn = document.getElementById("convertBtn");
+      const convertTypeEl = document.getElementById("convertType");
+      const statusEl = document.getElementById("status");
+
+      function readFileAsArrayBuffer(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.onerror = reject;
+          reader.readAsArrayBuffer(file);
+        });
+      }
+
+      function triggerDownload(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+      }
+
+      convertBtn.addEventListener("click", async () => {
+        const file = fileEl.files[0];
+        if (!file)
+          return (statusEl.textContent = "⚠️ Please select a file first.");
+
+        const convertType = convertTypeEl.value;
+        const customName =
+          document.getElementById("customName").value.trim() ||
+          "Converted_File";
+
+        statusEl.textContent = "⏳ Reading file...";
+
+        try {
+          const data = await readFileAsArrayBuffer(file);
+          const wb = XLSX.read(data, { type: "array" });
+          const firstSheet = wb.SheetNames[0];
+          const sheet = wb.Sheets[firstSheet];
+
+          if (convertType === "csv") {
+            const csv = XLSX.utils.sheet_to_csv(sheet);
+            const blob = new Blob([csv], { type: "text/csv" });
+            triggerDownload(blob, `${customName}.csv`);
+          } else if (convertType === "json") {
+            const json = XLSX.utils.sheet_to_json(sheet);
+            const blob = new Blob([JSON.stringify(json, null, 2)], {
+              type: "application/json",
+            });
+            triggerDownload(blob, `${customName}.json`);
+          } else if (convertType === "xlsx") {
+            const newWb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(newWb, sheet, "Sheet1");
+            const wbout = XLSX.write(newWb, {
+              bookType: "xlsx",
+              type: "array",
+            });
+            const blob = new Blob([wbout], {
+              type: "application/octet-stream",
+            });
+            triggerDownload(blob, `${customName}.xlsx`);
+          }
+
+          statusEl.textContent = "✅ File converted successfully!";
+        } catch (err) {
+          console.error(err);
+          statusEl.textContent = "❌ Error: " + err.message;
+        }
+      });
+    </script>
+  </body>
+</html>

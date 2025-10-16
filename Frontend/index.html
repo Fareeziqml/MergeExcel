@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>💚 ILoveExcel — Your Online Excel Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+      /* Fade and float animations */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes float {
+        0% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-6px);
+        }
+        100% {
+          transform: translateY(0px);
+        }
+      }
+
+      .fade-in {
+        animation: fadeIn 0.8s ease forwards;
+      }
+
+      .float {
+        animation: float 3s ease-in-out infinite;
+      }
+
+      .glow {
+        box-shadow: 0 0 18px rgba(0, 128, 64, 0.3);
+      }
+
+      body {
+        scroll-behavior: smooth;
+      }
+
+      footer{
+        text-align: center;
+      }
+
+    </style>
+  </head>
+
+  <body
+    class="bg-gradient-to-b from-green-50 via-white to-green-100 text-gray-800 font-[Inter]"
+  >
+    <!-- Header -->
+    <header
+      class="bg-white/70 backdrop-blur-md shadow-md sticky top-0 z-10 border-b border-green-100"
+    >
+      <div
+        class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center"
+      >
+        <h1 class="text-3xl font-extrabold gradient-text">💚 ILoveExcel</h1>
+        <nav
+          class="space-x-5 text-sm font-semibold flex flex-wrap justify-center"
+        >
+          <a
+            href="index.html"
+            class="text-green-700 underline underline-offset-4"
+            >Home</a
+          >
+          <a href="merge.html" class="hover:text-green-700 transition">Merge</a>
+          <a href="split.html" class="hover:text-green-700 transition">Split</a>
+          <a href="convert.html" class="hover:text-green-700 transition"
+            >Convert</a
+          >
+          <a href="clean.html" class="hover:text-green-700 transition">Clean</a>
+          <a href="combine-analyze.html" class="hover:text-green-700 transition"
+            >Combine + Analyze</a
+          >
+          <a href="EditExcel.html" class="hover:text-green-700 transition">Edit Excel</a>
+     
+        </nav>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="text-center mt-16 mb-14 px-6 fade-in">
+      <h2 class="text-5xl font-extrabold text-gray-800 leading-tight">
+        All Your <span class="gradient-text">Excel Tools</span> in One Place
+      </h2>
+      <p class="text-gray-600 mt-4 max-w-2xl mx-auto text-lg">
+        Merge, split, convert, clean, and analyze Excel files right in your
+        browser — <span class="font-semibold text-green-700">fast</span>,
+        <span class="font-semibold text-green-600">free</span>, and
+        <span class="font-semibold text-green-500">private</span>.
+      </p>
+      <div class="mt-8"></div>
+    </section>
+
+    <!-- Tool Cards -->
+    <main
+      class="grid sm:grid-cols-2 md:grid-cols-3 gap-8 max-w-6xl mx-auto px-6 pb-24"
+    >
+      <!-- Merge Excel -->
+      <a
+        href="merge.html"
+        class="group p-6 bg-white/80 backdrop-blur-lg rounded-2xl glow hover:shadow-2xl transition transform hover:-translate-y-2 hover:scale-[1.03] fade-in flex flex-col items-center text-center"
+        style="animation-delay: 0.1s"
+      >
+        <i
+          data-lucide="combine"
+          class="w-10 h-10 text-green-600 mb-3 float"
+        ></i>
+        <h3 class="font-bold text-lg mb-1 text-green-700">Merge Excel</h3>
+        <p class="text-sm text-gray-600">
+          Combine multiple Excel or CSV files into one sheet.
+        </p>
+      </a>
+
+      <!-- Split Excel -->
+      <a
+        href="split.html"
+        class="group p-6 bg-white/80 backdrop-blur-lg rounded-2xl glow hover:shadow-2xl transition transform hover:-translate-y-2 hover:scale-[1.03] fade-in flex flex-col items-center text-center"
+        style="animation-delay: 0.2s"
+      >
+        <i
+          data-lucide="scissors"
+          class="w-10 h-10 text-green-500 mb-3 float"
+        ></i>
+        <h3 class="font-bold text-lg mb-1 text-green-700">Split Excel</h3>
+        <p class="text-sm text-gray-600">
+          Divide your Excel file by rows or column values.
+        </p>
+      </a>
+
+      <!-- Convert Excel -->
+      <a
+        href="convert.html"
+        class="group p-6 bg-white/80 backdrop-blur-lg rounded-2xl glow hover:shadow-2xl transition transform hover:-translate-y-2 hover:scale-[1.03] fade-in flex flex-col items-center text-center"
+        style="animation-delay: 0.3s"
+      >
+        <i
+          data-lucide="refresh-ccw"
+          class="w-10 h-10 text-green-400 mb-3 float"
+        ></i>
+        <h3 class="font-bold text-lg mb-1 text-green-700">Convert Excel</h3>
+        <p class="text-sm text-gray-600">
+          Convert Excel files to CSV, PDF, or JSON — and vice versa.
+        </p>
+      </a>
+
+      <!-- Clean Data -->
+      <a
+        href="clean.html"
+        class="group p-6 bg-white/80 backdrop-blur-lg rounded-2xl glow hover:shadow-2xl transition transform hover:-translate-y-2 hover:scale-[1.03] fade-in flex flex-col items-center text-center"
+        style="animation-delay: 0.4s"
+      >
+        <i data-lucide="brush" class="w-10 h-10 text-green-500 mb-3 float"></i>
+        <h3 class="font-bold text-lg mb-1 text-green-700">Clean Data</h3>
+        <p class="text-sm text-gray-600">
+          Remove duplicates, blanks, and fix inconsistent formatting.
+        </p>
+      </a>
+
+      <!-- Combine + Analyze -->
+      <a
+        href="combine-analyze.html"
+        class="group p-6 bg-white/80 backdrop-blur-lg rounded-2xl glow hover:shadow-2xl transition transform hover:-translate-y-2 hover:scale-[1.03] fade-in flex flex-col items-center text-center"
+        style="animation-delay: 0.5s"
+      >
+        <i data-lucide="layers" class="w-10 h-10 text-green-600 mb-3 float"></i>
+        <h3 class="font-bold text-lg mb-1 text-green-700">Analyze Data</h3>
+        <p class="text-sm text-gray-600">
+          Merge multiple sheets and instantly view analysis results.
+        </p>
+      </a>
+
+      <!-- Edit Excel -->
+      <a
+        href="EditExcel.html"
+        class="group p-6 bg-white/80 backdrop-blur-lg rounded-2xl glow hover:shadow-2xl transition transform hover:-translate-y-2 hover:scale-[1.03] fade-in flex flex-col items-center text-center"
+        style="animation-delay: 0.5s"
+      >
+        <i data-lucide="edit-3" class="w-10 h-10 text-green-600 mb-3 float"></i>
+        <h3 class="font-bold text-lg mb-1 text-green-700">Edit Excel</h3>
+        <p class="text-sm text-gray-600">
+          Edit your Excel Here.
+        </p>
+      </a>
+
+
+   <footer
+  class="fixed bottom-0 left-0 w-full text-center text-sm text-gray-500 py-4 backdrop-blur border-t border-green-100 fade-in"
+>
+      © 2025 <span class="font-semibold text-green-700">ILoveExcel</span> — Made
+      with 💚 for Excel lovers.
+    </footer>
+
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>
