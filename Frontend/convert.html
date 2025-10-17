@@ -8,7 +8,6 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <style>
-      /* Fade-in animation */
       @keyframes fadeIn {
         from {
           opacity: 0;
@@ -19,12 +18,12 @@
           transform: translateY(0);
         }
       }
+
       body {
         animation: fadeIn 0.6s ease-in-out;
         background: linear-gradient(to bottom right, #e8f5e9, #f1f8f6);
       }
 
-      /* Floating glow animation for icons */
       @keyframes float {
         0%,
         100% {
@@ -35,10 +34,33 @@
         }
       }
 
-      /* Custom glowing hover */
       .glow-hover:hover {
         box-shadow: 0 4px 20px rgba(0, 128, 64, 0.3);
         transform: scale(1.02);
+      }
+
+      /* Popup Overlay */
+      .popup-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(6px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+        animation: fadeIn 0.4s ease-in-out;
+      }
+
+      .popup {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 10px 30px rgba(0, 128, 64, 0.2);
+        width: 350px;
+        max-width: 90%;
+        text-align: center;
+        padding: 1.5rem;
+        animation: fadeIn 0.5s ease;
       }
     </style>
   </head>
@@ -49,7 +71,7 @@
       <div
         class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center"
       >
-        <h1 class="text-2xl font-bold gradient-text flex items-center gap-2">
+        <h1 class="text-2xl font-bold flex items-center gap-2">
           💚 ILoveExcel
         </h1>
         <nav
@@ -83,9 +105,7 @@
           data-lucide="repeat"
           class="w-8 h-8 text-green-600 animate-[float_3s_ease-in-out_infinite]"
         ></i>
-        <h2 class="text-3xl font-extrabold gradient-text">
-          Convert Excel Files
-        </h2>
+        <h2 class="text-3xl font-extrabold">Convert Excel Files</h2>
       </div>
       <p class="text-gray-600 mb-6">
         Convert Excel or CSV files into different formats (CSV, JSON, or Excel).
@@ -136,22 +156,54 @@
           />
         </div>
 
-        <!-- Action -->
-        <button
-          id="convertBtn"
-          class="mt-5 w-full px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-500 text-white font-semibold rounded-xl hover:from-green-700 hover:to-emerald-600 transition-all shadow-md hover:shadow-lg glow-hover"
-        >
-          🔄 Convert & Download
-        </button>
+        <!-- Buttons -->
+        <div class="flex gap-3">
+          <button
+            id="convertBtn"
+            class="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-500 text-white font-semibold rounded-xl hover:from-green-700 hover:to-emerald-600 transition-all shadow-md hover:shadow-lg glow-hover"
+          >
+            🔄 Convert & Download
+          </button>
+
+          <button
+            id="resetBtn"
+            class="px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition-all"
+          >
+            ♻️ Reset
+          </button>
+        </div>
 
         <p id="status" class="text-sm text-gray-600 mt-3 text-center"></p>
       </div>
     </main>
 
     <footer class="text-center text-sm text-gray-500 py-8 mt-12">
-      © 2025 <span class="gradient-text font-semibold">ILoveExcel</span> — Made
+      © 2025 <span class="font-semibold text-green-700">ILoveExcel</span> — Made
       with 💚 for Excel lovers.
     </footer>
+
+    <!-- Popup -->
+    <div id="popup" class="hidden popup-overlay">
+      <div class="popup">
+        <h3 class="text-lg font-semibold mb-3">Processing your file...</h3>
+        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden mb-3">
+          <div
+            id="progressBar"
+            class="bg-green-500 h-3 rounded-full transition-all duration-200"
+            style="width: 0%"
+          ></div>
+        </div>
+        <p id="progressText" class="text-sm text-gray-600 mb-4">0%</p>
+        <div class="flex justify-center gap-3">
+          <button
+            id="cancelBtn"
+            class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
 
     <script>
       lucide.createIcons();
@@ -160,10 +212,26 @@
       const convertBtn = document.getElementById("convertBtn");
       const convertTypeEl = document.getElementById("convertType");
       const statusEl = document.getElementById("status");
+      const resetBtn = document.getElementById("resetBtn");
+
+      const popup = document.getElementById("popup");
+      const progressBar = document.getElementById("progressBar");
+      const progressText = document.getElementById("progressText");
+      const cancelBtn = document.getElementById("cancelBtn");
+
+      let cancelRequested = false;
 
       function readFileAsArrayBuffer(file) {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
+
+          reader.onprogress = (e) => {
+            if (e.lengthComputable) {
+              const percent = Math.min(50, (e.loaded / e.total) * 50);
+              updateProgress(percent);
+            }
+          };
+
           reader.onload = (e) => resolve(e.target.result);
           reader.onerror = reject;
           reader.readAsArrayBuffer(file);
@@ -176,8 +244,35 @@
         a.href = url;
         a.download = filename;
         a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        setTimeout(() => URL.revokeObjectURL(url), 3000);
       }
+
+      function updateProgress(percent) {
+        progressBar.style.width = percent + "%";
+        progressText.textContent = `${Math.round(percent)}%`;
+      }
+
+      function showPopup() {
+        popup.classList.remove("hidden");
+        updateProgress(0);
+      }
+
+      function closePopup() {
+        popup.classList.add("hidden");
+      }
+
+      cancelBtn.addEventListener("click", () => {
+        cancelRequested = true;
+        closePopup();
+        statusEl.textContent = "❌ Upload cancelled by user.";
+      });
+
+      resetBtn.addEventListener("click", () => {
+        fileEl.value = "";
+        document.getElementById("customName").value = "";
+        convertTypeEl.value = "csv";
+        statusEl.textContent = "🔁 Reset complete. Ready for new upload.";
+      });
 
       convertBtn.addEventListener("click", async () => {
         const file = fileEl.files[0];
@@ -189,10 +284,24 @@
           document.getElementById("customName").value.trim() ||
           "Converted_File";
 
+        showPopup();
         statusEl.textContent = "⏳ Reading file...";
+        cancelRequested = false;
 
         try {
           const data = await readFileAsArrayBuffer(file);
+          if (cancelRequested) return;
+
+          // Fake merge progress 50–95%
+          let fakeProgress = 50;
+          const fakeTimer = setInterval(() => {
+            if (cancelRequested) return clearInterval(fakeTimer);
+            if (fakeProgress < 95) {
+              fakeProgress += Math.random() * 2;
+              updateProgress(fakeProgress);
+            }
+          }, 200);
+
           const wb = XLSX.read(data, { type: "array" });
           const firstSheet = wb.SheetNames[0];
           const sheet = wb.Sheets[firstSheet];
@@ -220,9 +329,15 @@
             triggerDownload(blob, `${customName}.xlsx`);
           }
 
+          clearInterval(fakeTimer);
+          updateProgress(100);
+          progressText.textContent = "✅ Complete!";
+          setTimeout(closePopup, 1000);
+
           statusEl.textContent = "✅ File converted successfully!";
         } catch (err) {
           console.error(err);
+          closePopup();
           statusEl.textContent = "❌ Error: " + err.message;
         }
       });
