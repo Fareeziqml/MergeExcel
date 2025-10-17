@@ -21,6 +21,44 @@
           transform: translateY(0);
         }
       }
+      .popup-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(8px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 50;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+      }
+      .popup-overlay.active {
+        display: flex;
+        opacity: 1;
+      }
+      .popup-box {
+        background: white;
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        animation: fadeInUp 0.5s ease;
+        width: 300px;
+      }
+      @keyframes fadeInUp {
+        from {
+          transform: translateY(30px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
     </style>
   </head>
 
@@ -156,17 +194,47 @@
           />
         </div>
 
-        <!-- Action -->
-        <button
-          id="splitBtn"
-          class="mt-6 w-full px-6 py-3 bg-gradient-to-r from-green-600 to-green-400 text-white font-semibold rounded-lg hover:from-green-700 hover:to-green-500 shadow-md hover:shadow-lg transition-transform transform hover:scale-[1.02]"
-        >
-          ✂️ Split & Download
-        </button>
+        <!-- Action Buttons -->
+        <div class="flex gap-3">
+          <button
+            id="splitBtn"
+            class="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-green-400 text-white font-semibold rounded-lg hover:from-green-700 hover:to-green-500 shadow-md hover:shadow-lg transition-transform transform hover:scale-[1.02]"
+          >
+            ✂️ Split & Download
+          </button>
+          <button
+            id="resetBtn"
+            class="px-6 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold text-gray-700"
+          >
+            Reset
+          </button>
+        </div>
 
         <p id="status" class="text-sm text-gray-600 mt-3 text-center"></p>
       </div>
     </main>
+
+    <!-- Popup -->
+    <div id="popupOverlay" class="popup-overlay">
+      <div class="popup-box">
+        <h3 class="text-xl font-semibold text-green-700 mb-3">
+          Processing File...
+        </h3>
+        <div class="w-full bg-gray-200 h-3 rounded-full mb-3">
+          <div
+            id="progressBar"
+            class="bg-green-500 h-3 rounded-full w-0 transition-all duration-500"
+          ></div>
+        </div>
+        <p id="progressText" class="text-sm text-gray-600 mb-4">Uploading 0%</p>
+        <button
+          id="cancelBtn"
+          class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
 
     <!-- Footer -->
     <footer
@@ -176,7 +244,7 @@
       with 💚 for Excel lovers.
     </footer>
 
-    <!-- JS Logic -->
+    <!-- Script -->
     <script>
       lucide.createIcons();
 
@@ -188,9 +256,16 @@
       const loadColumnsBtn = document.getElementById("loadColumnsBtn");
       const splitBtn = document.getElementById("splitBtn");
       const statusEl = document.getElementById("status");
+      const resetBtn = document.getElementById("resetBtn");
+
+      const popup = document.getElementById("popupOverlay");
+      const progressBar = document.getElementById("progressBar");
+      const progressText = document.getElementById("progressText");
+      const cancelBtn = document.getElementById("cancelBtn");
 
       let headers = [];
       let rows = [];
+      let cancel = false;
 
       splitModeEl.addEventListener("change", () => {
         if (splitModeEl.value === "column") {
@@ -201,6 +276,83 @@
           splitRowsOption.classList.remove("hidden");
         }
       });
+
+      resetBtn.addEventListener("click", () => {
+        fileEl.value = "";
+        columnList.innerHTML = "";
+        document.getElementById("customName").value = "";
+        document.getElementById("rowRanges").value = "";
+        columnList.classList.add("hidden");
+        statusEl.textContent = "";
+      });
+
+      function updateProgress(percent, text) {
+        progressBar.style.width = percent + "%";
+        progressText.textContent = text;
+      }
+
+      function showPopup() {
+        popup.classList.add("active");
+        updateProgress(0, "Uploading 0%");
+      }
+      function hidePopup() {
+        popup.classList.remove("active");
+      }
+
+      cancelBtn.onclick = () => {
+        cancel = true;
+        hidePopup();
+        statusEl.textContent = "⛔ Canceled by user.";
+      };
+
+      function simulateMergeProgress(start, end, duration = 3000) {
+        return new Promise((resolve) => {
+          let current = start;
+          const step = (end - start) / (duration / 100);
+          const interval = setInterval(() => {
+            if (cancel) {
+              clearInterval(interval);
+              return;
+            }
+            current += step;
+            updateProgress(current, `Merging... ${Math.round(current)}%`);
+            if (current >= end) {
+              clearInterval(interval);
+              resolve();
+            }
+          }, 100);
+        });
+      }
+
+      async function fakeUpload(file) {
+        return new Promise((resolve) => {
+          let percent = 0;
+          const interval = setInterval(() => {
+            if (cancel) {
+              clearInterval(interval);
+              return;
+            }
+            percent += 5;
+            updateProgress(
+              percent / 2,
+              `Uploading... ${Math.round(percent / 2)}%`
+            );
+            if (percent >= 100) {
+              clearInterval(interval);
+              resolve();
+            }
+          }, 150);
+        });
+      }
+
+      async function finishProgress() {
+        await simulateMergeProgress(50, 95, 2500);
+        updateProgress(100, "✅ Complete!");
+        setTimeout(() => {
+          hidePopup();
+          statusEl.textContent = "✅ Download complete!";
+        }, 1500);
+      }
 
       function readFileAsArrayBuffer(file) {
         return new Promise((resolve, reject) => {
@@ -228,25 +380,17 @@
       loadColumnsBtn.addEventListener("click", async () => {
         const file = fileEl.files[0];
         if (!file) return alert("Please select a file first.");
-
         statusEl.textContent = "Loading columns...";
         const data = await readFileAsArrayBuffer(file);
         const wb = XLSX.read(data, { type: "array" });
-        const first = wb.SheetNames[0];
-        const sheet = wb.Sheets[first];
+        const sheet = wb.Sheets[wb.SheetNames[0]];
         rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
         headers = rows[0];
-
         columnList.innerHTML = "";
         headers.forEach((h) => {
           const id = "col_" + h.replace(/\s+/g, "_");
           const div = document.createElement("div");
-          div.innerHTML = `
-            <label class="flex items-center gap-2">
-              <input type="checkbox" id="${id}" value="${h}" class="text-green-600" />
-              <span class="text-sm">${h}</span>
-            </label>
-          `;
+          div.innerHTML = `<label class="flex items-center gap-2"><input type="checkbox" id="${id}" value="${h}" class="text-green-600" /><span class="text-sm">${h}</span></label>`;
           columnList.appendChild(div);
         });
         columnList.classList.remove("hidden");
@@ -256,12 +400,15 @@
       splitBtn.addEventListener("click", async () => {
         const file = fileEl.files[0];
         if (!file) return (statusEl.textContent = "Please select a file.");
-
         const baseName =
           document.getElementById("customName").value.trim() || "SplitFile";
         const mode = splitModeEl.value;
-
-        statusEl.textContent = "Processing...";
+        showPopup();
+        cancel = false;
+        await fakeUpload(file);
+        if (cancel) return;
+        await simulateMergeProgress(50, 95);
+        if (cancel) return;
 
         try {
           const data = await readFileAsArrayBuffer(file);
@@ -269,41 +416,36 @@
           const sheet = wb.Sheets[wb.SheetNames[0]];
           rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
           headers = rows[0];
+          let outputName = "";
 
           if (mode === "column") {
             const selectedCols = Array.from(
               columnList.querySelectorAll("input:checked")
             ).map((el) => el.value);
-
             if (selectedCols.length === 0)
               return (statusEl.textContent =
                 "Please select at least one column.");
-
             const selectedIndexes = headers
               .map((h, i) => (selectedCols.includes(h) ? i : -1))
               .filter((i) => i !== -1);
-
             const filteredRows = rows.map((r) =>
               selectedIndexes.map((i) => r[i] ?? "")
             );
-
             const ws = XLSX.utils.aoa_to_sheet(filteredRows);
             const newWb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(newWb, ws, "Split");
             const blob = workbookToBlob(newWb);
-            triggerDownload(blob, `${baseName}_columns.xlsx`);
-            statusEl.textContent = "✅ File split by selected columns.";
-          } else if (mode === "rows") {
+            outputName = `${baseName}_columns.xlsx`;
+            triggerDownload(blob, outputName);
+          } else {
             const rangeInput = document
               .getElementById("rowRanges")
               .value.trim();
             if (!rangeInput)
               return (statusEl.textContent =
                 "Please enter at least one row range.");
-
             const ranges = rangeInput.split(",").map((r) => r.trim());
             let selectedRows = [];
-
             for (const range of ranges) {
               const [start, end] = range.split("-").map((n) => parseInt(n));
               if (isNaN(start))
@@ -311,18 +453,19 @@
               const e = isNaN(end) ? start : end;
               selectedRows.push(...rows.slice(start, e + 1));
             }
-
-            // Always include the header as the first row
             const output = [headers, ...selectedRows];
             const ws = XLSX.utils.aoa_to_sheet(output);
             const newWb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(newWb, ws, "Split");
             const blob = workbookToBlob(newWb);
-            triggerDownload(blob, `${baseName}_rows.xlsx`);
-            statusEl.textContent = "✅ File split by selected rows.";
+            outputName = `${baseName}_rows.xlsx`;
+            triggerDownload(blob, outputName);
           }
+
+          await finishProgress();
         } catch (err) {
           console.error(err);
+          hidePopup();
           statusEl.textContent = "❌ Error: " + err.message;
         }
       });
